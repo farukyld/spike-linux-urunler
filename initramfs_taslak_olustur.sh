@@ -32,5 +32,3 @@ mdev -s
 sh
 EOF
 chmod +x initramfs/init
-
-echo "oluşturulan initramfs dizinine kernel boot edildikten sonra kullanmak istediğiniz programları riscv64-unknown-linux-gnu- derleyicisiyle -static derleyip koyun"

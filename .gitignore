@@ -1,5 +1,5 @@
 initramfs
 initramfs.cpio
 fw_payload
-
-
+dts.dts
+dtb.dtb
