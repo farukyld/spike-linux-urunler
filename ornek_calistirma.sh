@@ -1,3 +1,4 @@
+# cd spike-linux-urunler
 cd initramfs
 find . | cpio -o --format=newc > ../initramfs.cpio
 cd ..
