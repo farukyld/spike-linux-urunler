@@ -88,7 +88,7 @@ fw_initram_offset=$(printf "0x%x" $fw_initram_offset)
 
 
 cd opensbi
-rm -rf build
+rm -rf build/platform/generic/firmware/fw_payload.elf.ld
 make FW_DYNAMIC=n FW_JUMP=n FW_PAYLOAD=y \
  CROSS_COMPILE=riscv64-unknown-linux-gnu-\
  PLATFORM=generic FW_FDT_PATH=../dtb.dtb \
