@@ -65,7 +65,7 @@ if ! grep -q "INITRD_START" "$dts_taslak" || ! grep -q "INITRD_END" "$dts_taslak
   exit 1
 fi
 
-initrd_start_deger=0xffd7be00
+initrd_start_deger=0xf0d7be00
 initrd_end_deger=$((initrd_start_deger + initramfs_boyut_byte))
 initrd_end_deger=$(printf "0x%x" $initrd_end_deger)
 # initrd_end_deger'yu hex'e cevir.
