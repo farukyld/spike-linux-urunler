@@ -96,6 +96,9 @@ make FW_DYNAMIC=n FW_JUMP=n FW_PAYLOAD=y \
  FW_INITRAM_PATH=../initramfs.cpio\
  FW_INITRAM_OFFSET=$fw_initram_offset \
  FW_TEXT_START=$fw_text_start -j16
+
+cp build/platform/generic/firmware/fw_payload.elf ../
+
 cd ..
 
 spike opensbi/build/platform/generic/firmware/fw_payload.elf
