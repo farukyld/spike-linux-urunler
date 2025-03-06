@@ -1,16 +1,29 @@
 # https://risc-v-machines.readthedocs.io/en/latest/linux/simple/
 # https://www.reddit.com/r/RISCV/comments/1alnmm9/booting_linux_on_spike/?rdt=64067
-mkdir initramfs
-cd initramfs
+
+if [ -z "$1" ]; then
+  echo "!bu script calistirilirken arguman olarak olusturulacak initramfs dizini verilmeli!"
+  exit 1
+fi
+
+initramfs_dir=$1
+# $1 bos ise uyarip bitir.
+mkdir $initramfs_dir
+cd $initramfs_dir
 mkdir -p {bin,sbin,dev,etc,home,mnt,proc,sys,usr,tmp}
 mkdir -p usr/{bin,sbin}
 mkdir -p proc/sys/kernel
 cd dev
+
+echo "bu komutlar sudo ile calistirilmalidir. "
+echo "$(pwd) dizini altinda, initrd bootlandiginda kullanilacak olan device-node'lari olustururlar:"
+echo "sudo mknod sda b 8 0"
+echo "sudo mknod console c 5 1"
 sudo mknod sda b 8 0 
 sudo mknod console c 5 1
 cd ../..
-cp busybox initramfs/bin
-cat >initramfs/init << 'EOF'
+cp busybox $initramfs_dir/bin
+cat >$initramfs_dir/init << 'EOF'
 #!/bin/busybox sh
 
 # Make symlinks
@@ -31,4 +44,4 @@ mdev -s
 
 sh
 EOF
-chmod +x initramfs/init
+chmod +x $initramfs_dir/init

@@ -1,47 +1,50 @@
 #!/bin/bash
 
+read -p "initramfs olarak ayarlanacak dizini girin (varsayilan: initramfs): " initramfs_dir
+initramfs_dir=${initramfs_dir:-initramfs}  # If empty, set default to "initramfs"
+
+
 initramfs_taslak_script="./initramfs_taslak_olustur.sh"
 
-if [ -d "initramfs" ]; then
-  read -p " initramfs dizini daha once olusturulmus. uzerine yazmak ister misiniz? (y/n): " choice
+if [ -d $initramfs_dir ]; then
+  read -p "$initramfs_dir dizini daha once olusturulmus. (potansiyel olarak) uzerine yazmak ister misiniz? (y/N): " secim
 
-  case "$choice" in
+  case "$secim" in
     [yY] )
-      $initramfs_taslak_script
-      echo "mevcut initramfs dizininin uzerine yazildi."
-      ;;
-    [nN] )
-      echo "mevcut initramfs dizini ile devam ediliyor."
+      $initramfs_taslak_script $initramfs_dir
+      echo "mevcut $initramfs_dir dizininin uzerine yazildi."
       ;;
     * )
-      # Invalid input
-      echo "gecersiz yanit. mevcut initramfs ile devam ediliyor."
+      echo "mevcut $initramfs_dir dizini ile devam ediliyor."
       ;;
   esac
 else
-  $initramfs_taslak_script
+  echo "$initramfs_taslak_script $initramfs_dir komutu calistiriliyor."
+  $initramfs_taslak_script $initramfs_dir
   echo "initramfs dizini olusturuldu."
 fi
 
-initramfs_home_dir=./initramfs/home/usr1
+initramfs_home_dir=$initramfs_dir/home/user1
+echo "$initramfs_home_dir dizini olusturuldu"
+
 mkdir -p $initramfs_home_dir
 echo "simulasyon sirasinda kullanmak istediginiz dosyalarin path'lerini giriniz."
 echo "bu dosyalar $initramfs_home_dir dizinine kopyalanacaktir."
 echo "calistirmak istediginiz programlar, riscv-unknown-linux-gnu-xxx -static olarak derlenmis olmalilar."
-echo "bu islemi su an manuel olarak yaptiysaniz bu sorguyu gecebilirsiniz."
+echo "bu islemi su an manuel olarak yaptiysaniz bu adimi gecebilirsiniz."
 
 read -p " kopyalanacak dosyalar: " kopyalanacak_dosyalar
 
 if [ -n "$kopyalanacak_dosyalar" ]; then
-    cp $kopyalanacak_dosyalar $initramfs_home_dir
+    cp -r -t $initramfs_home_dir $kopyalanacak_dosyalar
 fi
 
 
-cd initramfs
-find . | cpio -o --format=newc > ../initramfs.cpio
+cd $initramfs_dir
+find . | cpio -o --format=newc > ../$initramfs_dir.cpio
 cd ..
 
-initramfs_boyut_byte=$(wc -c < initramfs.cpio)
+initramfs_boyut_byte=$(wc -c < $initramfs_dir.cpio)
 
 # INITRD_START ve INITRD_END kelimeleri geciyor mu diye kontrol et,
 # gecmiyorsa hata mesaji verip bitir.
@@ -86,16 +89,25 @@ fw_text_start=0x80000000
 fw_initram_offset=$((initrd_start_deger - fw_text_start))
 fw_initram_offset=$(printf "0x%x" $fw_initram_offset)
 
-
 cd opensbi
+
 rm -rf build/platform/generic/firmware/fw_payload.elf.ld
-make FW_DYNAMIC=n FW_JUMP=n FW_PAYLOAD=y \
- CROSS_COMPILE=riscv64-unknown-linux-gnu-\
- PLATFORM=generic FW_FDT_PATH=../dtb.dtb \
- FW_PAYLOAD_PATH=../Image \
- FW_INITRAM_PATH=../initramfs.cpio\
- FW_INITRAM_OFFSET=$fw_initram_offset \
- FW_TEXT_START=$fw_text_start -j16
+
+make_cmd="make FW_DYNAMIC=n FW_JUMP=n FW_PAYLOAD=y \
+  CROSS_COMPILE=riscv64-unknown-linux-gnu- \
+  PLATFORM=generic FW_FDT_PATH=../dtb.dtb \
+  FW_PAYLOAD_PATH=../Image \
+  FW_INITRAM_PATH=../$initramfs_dir.cpio \
+  FW_INITRAM_OFFSET=$fw_initram_offset \
+  FW_TEXT_START=$fw_text_start -j16"
+
+eval $make_cmd
+
+if [ $? -ne 0 ]; then
+  echo "opensbi build'leme basarisiz oldu. build dizini temizlenip yeniden deneniyor."
+  rm -rf build/*
+  eval $make_cmd
+fi
 
 cp build/platform/generic/firmware/fw_payload.elf ../
 
